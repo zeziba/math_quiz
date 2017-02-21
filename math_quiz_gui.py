@@ -16,7 +16,12 @@ output_data = [
     "Please Enter your answer[Round Down to a whole number]",
     "You answered Correctly",
     "You failed to correctly answer!",
-    "Not implemented!"
+    "Not implemented!",
+    "Division is no remander division, take 3 / 2 it\n"
+    "is equal to 1 with a reminder of 1.\n"
+    "Just enter in one and ignore the remainder.\n"
+    "All other math is proformed as normal.",
+    "Lori's Special Ability Used!"
 ]
 
 # These are the operators the game works with.
@@ -27,16 +32,22 @@ random_problem = [
     "-"
 ]
 
-
 class MainGUI(tk.Tk):
 
     def __init__(self):
         tk.Tk.__init__(self)
+        
+        #  Special Lori Hidden ability
+        self.__hhQ = True
+        # End of SLHA
+        
         # Font Data
         self.font_data_display = ('times', 20)
         self.font_data_menu = ('times', 14)
+        
         # This is the constant difficulty modifier
         self.__mod_diff = 1.35
+        
         # This is the current Difficulty level
         if exists(join(path_history, "difficulty.dif")):
             with open(join(path_history, "difficulty.dif"), 'r') as file:
@@ -45,6 +56,7 @@ class MainGUI(tk.Tk):
                     self.current_difficulty = eval(line.strip('\n'))
         else:
             self.current_difficulty = 5.0
+            
         # This is the current Difficulty level
         if exists(join(path_history, "game_data.bin")):
             self.history = dict()
@@ -63,10 +75,8 @@ class MainGUI(tk.Tk):
         # All the following are for the display
         self.display_area_text_var = tk.StringVar()
         self.question_field_var = tk.StringVar()
-
         self.main_file_menu = tk.Menu(self)
         self.config(menu=self.main_file_menu)
-
         self.resizable(width=False, height=False)
         self.geometry('{}x{}'.format(660, 220))
 
@@ -74,43 +84,31 @@ class MainGUI(tk.Tk):
         self.first_file_menu = tk.Menu(self.main_file_menu, tearoff=0)
         self.sub_ffm_Start = tk.Menu(self.first_file_menu)
         self.main_file_menu.add_cascade(label="File", menu=self.sub_ffm_Start, font=self.font_data_menu)
-
         self.sub_ffm_Start.add_separator()
-
         self.sub_ffm_Start.add_command(label="Start Game", command=self.start_game, font=self.font_data_menu)
-
         self.sub_ffm_Start.add_separator()
-
         self.sub_ffm_Start.add_command(label="Convert History to CSV",
                                        command=self.convert_history_csv, font=self.font_data_menu)
-
         self.sub_ffm_Start.add_separator()
-
+        self.sub_ffm_Start.add_command(label="Help", command=self.create_help, font=self.font_data_menu)
+        self.sub_ffm_Start.add_separator()
         self.sub_ffm_Start.add_command(label="Quit Game", command=self.quit_game, font=self.font_data_menu)
         # End Drop-down
 
         # Display Text
         self.display_area_text_var.set(output_data[0])
-
         self.display_area_text = tk.Label(self, textvariable=self.display_area_text_var, font=self.font_data_display)
         self.question_field = tk.Label(self, textvariable=self.question_field_var, font=self.font_data_display)
-
         self.cur_diff_var = tk.StringVar()
         self.cur_diff = tk.Label(self, textvariable=self.cur_diff_var, font=self.font_data_display)
-
         self.cur_diff_var.set("Current Difficulty: %s" % self.current_difficulty)
-
         self.cur_diff.grid(row=4, column=0, sticky='S')
-
         self.display_area_text.grid(row=0, columnspan=2, sticky='S')
         self.question_field.grid(row=1, columnspan=2, sticky='S')
-
         self.right_var = tk.StringVar()
         self.right = tk.Label(self, textvariable=self.right_var, font=self.font_data_display)
-
         self.wrong_var = tk.StringVar()
         self.wrong = tk.Label(self, textvariable=self.wrong_var, font=self.font_data_display)
-
         self.right.grid(row=5, column=0, sticky='ES')
         self.wrong.grid(row=5, column=1, sticky='WS')
         # End Display
@@ -119,9 +117,11 @@ class MainGUI(tk.Tk):
         self.input_var = tk.StringVar()
         self.input_entry = tk.Entry(self, textvariable=self.input_var, font=self.font_data_display)
         self.input_entry.grid(row=2, columnspan=2, sticky='S')
-
         self.input_entry.bind('<Return>', self.check_guess)
         # End Input Entry
+        
+        #  Button to start game, self destroys when clciked
+        self.start_button()
 
     def start_game(self):
         """
@@ -168,10 +168,15 @@ class MainGUI(tk.Tk):
                 self.history['correct'] += 1
                 self.save_history()
                 self.save_difficulty()
+            elif self.__hhQ:
+                if int(self.input_var.get()) == 42:
+                    self.__hhQ = False
+                    self.input_var.set(output_data[7])
+                    self.history['correct'] += 1
+                    self.save_history()
             else:
                 self.input_var.set(output_data[4])
                 self.current_difficulty -= 0.1
-
                 self.history['wrong'] += 1
             self.after(250, self.ask_question)
         except ValueError:
@@ -223,6 +228,26 @@ class MainGUI(tk.Tk):
         """
         self.display_area_text_var.set(output_data[5])
         pass
+        
+    def create_help(self):
+        """
+        Function creates an about pop-up to display the rules.
+        """
+        help_window = tk.Toplevel()
+        label = tk.Label(help_window, text=output_data[6], font=self.font_data_display)
+        label.pack()
+        q_button = tk.Button(help_window, text="Quit", font=self.font_data_display, command=help_window.destroy)
+        q_button.pack()
+        help_window.focus_force()
+        
+    def start_button(self):
+        def c_(item):
+            self.ask_question()
+            item.destroy()
+        b = tk.Button(None, text="Start Game")
+        b['command'] = lambda i=b: c_(i)
+        b.grid(column=0, sticky="W")
+        
 
 
 if __name__ == "__main__":
